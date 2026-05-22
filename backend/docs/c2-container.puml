@@ -1,0 +1,30 @@
+@startuml c2-container
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title [C2] Контейнерная диаграмма — Aspect Gallery Backend
+
+LAYOUT_WITH_LEGEND()
+
+Person(admin, "Администратор галереи", "Управляет контентом через браузер")
+Person_Ext(visitor, "Посетитель сайта", "Просматривает каталог, оставляет заявки")
+
+System_Ext(frontend, "Aspect Gallery SPA", "Фронтенд-приложение.\nЕдинственный HTTP-клиент бэкенда.")
+System_Ext(smtp, "SMTP-провайдер", "Внешний почтовый сервер")
+
+System_Boundary(backend, "Aspect Gallery Backend") {
+
+    Container(api, "Express API Server", "Node.js 20, Express 4", "Обрабатывает все HTTP-запросы.\nМаршруты:\n/api/artworks — каталог артворков\n/api/artists — художники\n/api/exhibitions — выставки\n/api/inquiries — заявки на покупку\n/api/contact — контактные сообщения\n/api/newsletter — подписки\n/api/settings — настройки галереи\n/api/upload — загрузка файлов\n/ar/:id — AR-просмотрщик")
+
+    ContainerDb(db, "База данных", "PostgreSQL, Prisma ORM", "Хранит все бизнес-данные.\nТаблицы: Artist, Artwork, Exhibition,\nInquiry, ContactMessage,\nNewsletterSubscriber, GallerySettings")
+
+    Container(storage, "Файловое хранилище", "Файловая система, /uploads", "Хранит медиафайлы:\n— изображения артворков\n  (оригинал, 800px, 400px)\n— обложки выставок\n— GLB и USDZ 3D-модели для AR")
+}
+
+Rel(admin, frontend, "Управляет контентом", "HTTPS, браузер")
+Rel(visitor, frontend, "Просматривает и взаимодействует", "HTTPS, браузер")
+Rel(frontend, api, "API-запросы", "HTTP/REST, JSON")
+Rel(api, db, "Читает и пишет данные", "Prisma ORM / SQL")
+Rel(api, storage, "Сохраняет и отдаёт файлы", "Multer (запись), Express static (чтение)")
+Rel(api, smtp, "Отправляет письма", "Nodemailer / SMTP")
+
+@enduml

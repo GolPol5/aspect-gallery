@@ -1,0 +1,23 @@
+@startuml c1-context
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title [C1] Контекстная диаграмма — Aspect Gallery
+
+LAYOUT_WITH_LEGEND()
+
+Person(admin, "Администратор галереи", "Управляет артворками, художниками,\nвыставками; читает обращения\nи отвечает на них")
+
+Person_Ext(visitor, "Посетитель сайта", "Просматривает каталог, оставляет\nзаявки на покупку, подписывается\nна рассылку, отправляет сообщения")
+
+System(backend, "Aspect Gallery Backend", "REST API на Node.js.\nУправляет контентом галереи,\nфайлами, AR-моделями и рассылками.")
+
+System_Ext(frontend, "Aspect Gallery SPA", "Фронтенд на Vue/React.\nЕдинственный HTTP-клиент API.\nURL: http://localhost:5173")
+
+System_Ext(smtp, "SMTP-провайдер", "Внешний почтовый сервер.\nПринимает исходящие письма:\nуведомления об обращениях\nи ответы покупателям.")
+
+Rel(admin, frontend, "Управляет контентом", "HTTPS, браузер")
+Rel(visitor, frontend, "Просматривает и взаимодействует", "HTTPS, браузер")
+Rel(frontend, backend, "Запросы к API", "HTTP/REST, JSON")
+Rel(backend, smtp, "Отправляет email-уведомления", "SMTP")
+
+@enduml

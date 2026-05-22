@@ -1,0 +1,125 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Artist {
+  id        String    @id @default(uuid())
+  name      String
+  bio       String    @db.Text
+  createdAt DateTime  @default(now())
+  artworks  Artwork[]
+}
+
+model Artwork {
+  id          String        @id @default(uuid())
+  artistId    String
+  artist      Artist        @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  title       String
+  year        Int
+  type        ArtworkType
+  genre       ArtworkGenre
+  size        ArtworkSize
+  technique   String
+  dimensions  String
+  price       Int
+  description String        @db.Text
+  images      String[]
+  status      ArtworkStatus @default(draft)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  inquiries   Inquiry[]
+}
+
+model Exhibition {
+  id         String   @id @default(uuid())
+  slug       String   @unique
+  title      String
+  artists    String
+  dateStart  DateTime @db.Date
+  dateEnd    DateTime @db.Date
+  teaser     String   @db.Text
+  coverImage String?
+  createdAt  DateTime @default(now())
+}
+
+model Inquiry {
+  id        String        @id @default(uuid())
+  artworkId String
+  artwork   Artwork       @relation(fields: [artworkId], references: [id], onDelete: Cascade)
+  name      String
+  email     String
+  text      String        @db.Text
+  status    InquiryStatus @default(pending)
+  reply     String?       @db.Text
+  repliedAt DateTime?
+  createdAt DateTime      @default(now())
+}
+
+model ContactMessage {
+  id        String   @id @default(uuid())
+  name      String
+  email     String
+  subject   String?
+  message   String   @db.Text
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model NewsletterSubscriber {
+  id        String            @id @default(uuid())
+  email     String            @unique
+  source    NewsletterSource
+  createdAt DateTime          @default(now())
+}
+
+model GallerySettings {
+  id              String @id @default(uuid())
+  galleryName     String
+  email           String
+  phone           String
+  address         String
+  metaDescription String @db.Text
+  workingHours    String
+}
+
+enum ArtworkType {
+  painting
+  graphic
+  sculpture
+}
+
+enum ArtworkGenre {
+  abstract
+  portrait
+  landscape
+  still
+  conceptual
+}
+
+enum ArtworkSize {
+  small
+  medium
+  large
+}
+
+enum ArtworkStatus {
+  published
+  draft
+  sold
+}
+
+enum InquiryStatus {
+  pending
+  answered
+}
+
+enum NewsletterSource {
+  footer
+  exhibitions
+}
