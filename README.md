@@ -16,13 +16,49 @@
 
 ```
 aspect-gallery/
-├── frontend/   — React-приложение
-└── backend/    — REST API
+├── frontend/          — React-приложение
+├── backend/           — REST API
+└── docker-compose.yml — запуск всего стека
 ```
 
 ---
 
-## Быстрый старт (локально)
+## Запуск через Docker (рекомендуется)
+
+### Требования
+
+- Docker
+- Docker Compose
+
+### Запуск
+
+```bash
+git clone https://github.com/GolPol5/aspect-gallery.git
+cd aspect-gallery
+docker compose up --build
+```
+
+Приложение откроется на `http://localhost:5173`
+
+> База данных, миграции и все зависимости применяются автоматически.
+
+### Настройка почты (опционально)
+
+Если нужна отправка email — создать файл `.env` в корне репозитория:
+
+```bash
+cp backend/.env.example .env
+```
+
+Заполнить SMTP-переменные и перезапустить:
+
+```bash
+docker compose up --build
+```
+
+---
+
+## Локальный запуск (без Docker)
 
 ### Требования
 
@@ -40,49 +76,21 @@ cd aspect-gallery
 
 ```bash
 cd backend
-```
-
-Создать файл `.env` на основе примера:
-
-```bash
 cp .env.example .env
 ```
 
-Открыть `.env` и заполнить переменные:
-
-```env
-DATABASE_URL="postgresql://user:password@localhost:5432/aspect_db"
-PORT=3000
-CLIENT_URL=http://localhost:5173
-
-SMTP_HOST=smtp.example.com
-SMTP_PORT=465
-SMTP_USER=no-reply@example.com
-SMTP_PASS=secret
-SMTP_FROM="Галерея Аспект <no-reply@example.com>"
-GALLERY_EMAIL=info@aspect-gallery.ru
-
-UPLOADS_DIR=./uploads
-```
-
-Установить зависимости и применить миграции:
+Открыть `.env` и указать свою строку подключения к PostgreSQL и остальные параметры.
+Описание всех переменных — в разделе ниже.
 
 ```bash
 npm install
 npx prisma migrate dev
-```
-
-Запустить бэкенд:
-
-```bash
 npm run dev
 ```
 
 Сервер запустится на `http://localhost:3000`
 
----
-
-### 3. Настроить фронтенд
+### 3. Запустить фронтенд
 
 В новом терминале:
 
@@ -98,80 +106,22 @@ npm run dev
 
 ---
 
-## Запуск через Docker
+## Переменные окружения
 
-### Требования
+Все переменные описаны в `backend/.env.example`.
 
-- Docker
-- Docker Compose
-
-### Запуск
-
-В корне репозитория создать файл `docker-compose.yml`:
-
-```yaml
-services:
-  db:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_USER: aspect
-      POSTGRES_PASSWORD: secret
-      POSTGRES_DB: aspect_db
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-
-  backend:
-    build: ./backend
-    env_file: ./backend/.env
-    environment:
-      DATABASE_URL: postgresql://aspect:secret@db:5432/aspect_db
-    ports:
-      - "3000:3000"
-    depends_on:
-      - db
-    volumes:
-      - uploads:/app/uploads
-
-  frontend:
-    build: ./frontend
-    environment:
-      BACKEND_URL: http://backend:3000
-    ports:
-      - "5173:5173"
-    depends_on:
-      - backend
-
-volumes:
-  pgdata:
-  uploads:
-```
-
-Запустить:
-
-```bash
-docker compose up --build
-```
-
-Приложение будет доступно на `http://localhost:5173`
-
----
-
-## Переменные окружения (бэкенд)
-
-| Переменная | Описание | Пример |
-|-----------|----------|--------|
-| `DATABASE_URL` | Строка подключения к PostgreSQL | `postgresql://user:pass@localhost:5432/db` |
-| `PORT` | Порт бэкенда | `3000` |
-| `CLIENT_URL` | URL фронтенда (для CORS) | `http://localhost:5173` |
-| `SMTP_HOST` | SMTP-сервер для почты | `smtp.gmail.com` |
-| `SMTP_PORT` | Порт SMTP | `465` |
-| `SMTP_USER` | Логин почты | `no-reply@example.com` |
-| `SMTP_PASS` | Пароль почты | `secret` |
-| `SMTP_FROM` | Имя отправителя | `"Галерея Аспект <no-reply@example.com>"` |
-| `GALLERY_EMAIL` | Email галереи для входящих | `info@aspect-gallery.ru` |
-| `UPLOADS_DIR` | Путь для загружаемых файлов | `./uploads` |
+| Переменная | Описание |
+|-----------|----------|
+| `DATABASE_URL` | Строка подключения к PostgreSQL |
+| `PORT` | Порт бэкенда (по умолчанию `3000`) |
+| `CLIENT_URL` | URL фронтенда для CORS |
+| `SMTP_HOST` | SMTP-сервер для отправки писем |
+| `SMTP_PORT` | Порт SMTP |
+| `SMTP_USER` | Логин почты |
+| `SMTP_PASS` | Пароль почты |
+| `SMTP_FROM` | Имя и адрес отправителя |
+| `GALLERY_EMAIL` | Email галереи для входящих сообщений |
+| `UPLOADS_DIR` | Путь для загружаемых файлов |
 
 ---
 
@@ -180,31 +130,17 @@ docker compose up --build
 ### Бэкенд
 
 ```bash
-# Запуск в режиме разработки (с hot-reload)
-npm run dev
-
-# Запуск в production
-npm start
-
-# Применить миграции БД
-npx prisma migrate dev
-
-# Открыть визуальный редактор БД
-npx prisma studio
-
-# Заполнить БД тестовыми данными
-npx prisma db seed
+npm run dev          # запуск в режиме разработки
+npm start            # запуск в production
+npx prisma migrate dev   # применить миграции
+npx prisma studio        # визуальный редактор БД
+npx prisma db seed       # заполнить БД тестовыми данными
 ```
 
 ### Фронтенд
 
 ```bash
-# Запуск в режиме разработки
-npm run dev
-
-# Сборка для production
-npm run build
-
-# Предпросмотр production-сборки
-npm run preview
+npm run dev      # запуск в режиме разработки
+npm run build    # сборка для production
+npm run preview  # предпросмотр production-сборки
 ```
